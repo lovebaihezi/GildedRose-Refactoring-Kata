@@ -12,51 +12,81 @@ struct GildedRose
     items
 end
 
+function handle_sulfuras!(item::Item)
+    @assert item.name == "Sulfuras, Hand of Ragnaros"
+    item.sellin = 0
+    item.quality = 80
+    return nothing
+end
+
+function handle_aged_brie!(item::Item)
+    @assert item.name == "Aged Brie"
+    item.sellin -= 1
+    item.quality += 1
+    if item.sellin < 0
+        item.quality += 1
+    end
+    return nothing
+end
+
+function handle_backstage_passes!(item::Item)
+    @assert item.name == "Backstage passes to a TAFKAL80ETC concert"
+     item.sellin -= 1
+     if item.sellin < 0
+         item.quality = 0
+     elseif item.sellin < 5
+         item.quality += 3
+     elseif item.sellin < 10
+         item.quality += 2
+     else
+         item.quality += 1
+     end
+    return nothing
+end
+
+function handle_conjured!(item::Item)
+    @assert item.name == "Conjured Mana Cake"
+    item.sellin -= 1
+    item.quality -= 2
+    if item.sellin < 0
+        item.quality -= 2
+    end
+    return nothing
+end
+
+function handle_others!(item::Item)
+    @assert item.name != "Sulfuras, Hand of Ragnaros" && item.name != "Aged Brie" && item.name != "Backstage passes to a TAFKAL80ETC concert" && item.name != "Conjured Mana Cake"
+    item.sellin -= 1
+    item.quality -= 1
+    if item.sellin < 0
+        item.quality -= 1
+    end
+    return nothing
+end
+
+function update_item!(item::Item)
+    if item.name == "Sulfuras, Hand of Ragnaros"
+        return handle_sulfuras!(item)
+    end
+    item.sellin -= 1
+    if item.name == "Aged Brie"
+        handle_aged_brie!(item)
+    elseif item.name == "Backstage passes to a TAFKAL80ETC concert"
+        handle_backstage_passes!(item)
+    elseif item.name == "Conjured Mana Cake"
+        handle_conjured!(item)
+    else
+        handle_others!(item)
+    end
+    item.quality = min(item.quality, 50)
+    item.quality = max(item.quality, 0)
+    item.sellin = max(item.sellin, 0)
+    return nothing
+end
+
 function update_quality!(gr::GildedRose)
     for item in gr.items
-        if item.name != "Aged Brie" && item.name != "Backstage passes to a TAFKAL80ETC concert"
-            if item.quality > 0
-                if item.name != "Sulfuras, Hand of Ragnaros"
-                    item.quality = item.quality - 1
-                end
-            end
-        else
-            if item.quality < 50
-                item.quality = item.quality + 1
-                if item.name == "Backstage passes to a TAFKAL80ETC concert"
-                    if item.sellin < 11
-                        if item.quality < 50
-                            item.quality = item.quality + 1
-                        end
-                    end
-                    if item.sellin < 6
-                        if item.quality < 50
-                            item.quality = item.quality + 1
-                        end
-                    end
-                end
-            end
-        end
-        if item.name != "Sulfuras, Hand of Ragnaros"
-            item.sellin = item.sellin - 1
-        end
-        if item.sellin < 0
-            if item.name != "Aged Brie"
-                if item.name != "Backstage passes to a TAFKAL80ETC concert"
-                    if item.quality > 0
-                        if item.name != "Sulfuras, Hand of Ragnaros"
-                            item.quality = item.quality - 1
-                        end
-                    end
-                else
-                    item.quality = item.quality - item.quality
-                end
-            else
-                if item.quality < 50
-                    item.quality = item.quality + 1
-                end
-            end
-        end
+        update_item!(item)
     end
     return nothing
 end
